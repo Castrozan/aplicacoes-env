@@ -1,50 +1,47 @@
 {
   pkgs,
-  latest,
+  pkgsLatest,
   username,
-  home-version,
+  homeVersion,
   ...
 }:
 {
   home.username = username;
   home.homeDirectory = "/home/${username}";
-  home.stateVersion = home-version;
+  home.stateVersion = homeVersion;
   programs.home-manager.enable = true;
   news.display = "silent";
 
   imports = [
-    ./modules/dooit.nix
     # ./modules/m2.nix
     ./modules/pipx.nix
     ./modules/sdkman.nix
   ];
 
   home.packages = with pkgs; [
-    git
-    xclip
-    curl
-    zip
-    unzip
-    gnutar
-    curl
-    lazydocker
-    ripgrep-all
-    latest.direnv
-    latest.devenv
-
-    # nix formatting tools
-    nixd
-    nixfmt-rfc-style
-    alejandra
-
     brave
+    pkgsLatest.claude-code
+    pkgsLatest.code-cursor
+    curl
+    pkgsLatest.devenv
+    pkgsLatest.direnv
+    pkgsLatest.gemini-cli
+    git
+    gnutar
     insomnia
-    uv
+    lazydocker
+    lens
     postman
     redisinsight
-    lens
-    latest.code-cursor
-    latest.claude-code
-    latest.gemini-cli
+    ripgrep-all
+    unzip
+    uv
+    xclip
+    zip
+
+    # nix formatting tools
+    alejandra
+    nixd
+    nixfmt-rfc-style
   ];
 }
