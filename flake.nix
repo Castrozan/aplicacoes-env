@@ -2,16 +2,25 @@
   description = "Nix and Home Manager configuration for team Aplicações";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    # Nixpkgs 25.05 for stable packages
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
+    # Nixpkgs unstable for packages that are not yet in the stable channel
+    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
+    # Nixpkgs latest for bleeding edge packages
+    # $ nix flake update nixpkgs-latest
     nixpkgs-latest.url = "github:NixOS/nixpkgs/nixos-unstable";
-    home-manager.url = "github:nix-community/home-manager";
-    home-manager.inputs.nixpkgs.follows = "nixpkgs";
+    # Home Manager for managing user configurations
+    home-manager = {
+      url = "github:nix-community/home-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
     inputs@{
       self,
       nixpkgs,
+      nixpkgs-unstable,
       nixpkgs-latest,
       home-manager,
       ...
@@ -21,11 +30,9 @@
       users = [
         {
           username = "lucas.zanoni";
-          system = "x86_64-linux";
-          homeVersion = "23.11";
         }
         # To add more users, append another record here:
-        # { username = "alice"; system = "aarch64-linux"; homeVersion = "24.05"; }
+        # { username = "cleber"; }
       ];
 
       # Common extra args (all flake inputs)
@@ -35,8 +42,12 @@
       userHomeConfig =
         user:
         let
-          system = user.system;
+          system = "x86_64-linux";
           pkgs = import nixpkgs {
+            inherit system;
+            config.allowUnfree = true;
+          };
+          pkgsUnstable = import nixpkgs-unstable {
             inherit system;
             config.allowUnfree = true;
           };
@@ -51,10 +62,14 @@
             inherit pkgs;
             extraSpecialArgs = specialArgs // {
               username = user.username;
-              homeVersion = user.homeVersion;
+              pkgsUnstable = pkgsUnstable;
               pkgsLatest = pkgsLatest;
             };
-            modules = [ ./home.nix ];
+            modules = [
+              ./home.nix
+              # User-specific packages
+              ./users/${user.username}/default.nix
+            ];
           };
         };
     in

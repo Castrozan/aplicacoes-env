@@ -1,14 +1,13 @@
+# Default Home Manager configuration
 {
   pkgs,
   pkgsLatest,
   username,
-  homeVersion,
   ...
 }:
 {
   home.username = username;
   home.homeDirectory = "/home/${username}";
-  home.stateVersion = homeVersion;
   programs.home-manager.enable = true;
   news.display = "silent";
 
@@ -19,17 +18,12 @@
   ];
 
   home.packages = with pkgs; [
-    brave
-    pkgsLatest.claude-code
-    pkgsLatest.code-cursor
     curl
     pkgsLatest.devenv
     pkgsLatest.direnv
-    pkgsLatest.gemini-cli
     git
     gnutar
     insomnia
-    lazydocker
     lens
     postman
     redisinsight
