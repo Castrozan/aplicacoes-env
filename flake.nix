@@ -16,64 +16,60 @@
     };
   };
 
-  outputs =
-    inputs@{
-      self,
-      nixpkgs,
-      nixpkgs-unstable,
-      nixpkgs-latest,
-      home-manager,
-      ...
-    }:
-    let
-      # List of user configurations
-      users = [
-        {
-          username = "lucas.zanoni";
-        }
-        # To add more users, append another record here:
-        # { username = "cleber"; }
-      ];
+  outputs = inputs @ {
+    self,
+    nixpkgs,
+    nixpkgs-unstable,
+    nixpkgs-latest,
+    home-manager,
+    ...
+  }: let
+    # List of user configurations
+    users = [
+      {
+        username = "lucas.zanoni";
+      }
+      # To add more users, append another record here:
+      # { username = "cleber"; }
+    ];
 
-      # Common extra args (all flake inputs)
-      specialArgs = { inherit inputs; };
+    # Common extra args (all flake inputs)
+    specialArgs = {inherit inputs;};
 
-      # Function to build each user's homeConfiguration
-      userHomeConfig =
-        user:
-        let
-          system = "x86_64-linux";
-          pkgs = import nixpkgs {
-            inherit system;
-            config.allowUnfree = true;
+    # Function to build each user's homeConfiguration
+    userHomeConfig = user: let
+      system = "x86_64-linux";
+      pkgs = import nixpkgs {
+        inherit system;
+        config.allowUnfree = true;
+      };
+      pkgsUnstable = import nixpkgs-unstable {
+        inherit system;
+        config.allowUnfree = true;
+      };
+      pkgsLatest = import nixpkgs-latest {
+        inherit system;
+        config.allowUnfree = true;
+      };
+    in {
+      name = "${user.username}@${system}";
+      value = home-manager.lib.homeManagerConfiguration {
+        inherit pkgs;
+        extraSpecialArgs =
+          specialArgs
+          // {
+            username = user.username;
+            pkgsUnstable = pkgsUnstable;
+            pkgsLatest = pkgsLatest;
           };
-          pkgsUnstable = import nixpkgs-unstable {
-            inherit system;
-            config.allowUnfree = true;
-          };
-          pkgsLatest = import nixpkgs-latest {
-            inherit system;
-            config.allowUnfree = true;
-          };
-        in
-        {
-          name = "${user.username}@${system}";
-          value = home-manager.lib.homeManagerConfiguration {
-            inherit pkgs;
-            extraSpecialArgs = specialArgs // {
-              username = user.username;
-              pkgsUnstable = pkgsUnstable;
-              pkgsLatest = pkgsLatest;
-            };
-            modules = [
-              ./home.nix
-              # User-specific packages
-              ./users/${user.username}/default.nix
-            ];
-          };
-        };
-    in
-    {
-      homeConfigurations = builtins.listToAttrs (map userHomeConfig users);
+        modules = [
+          ./home.nix
+          # User-specific packages
+          ./users/${user.username}/default.nix
+        ];
+      };
     };
+  in {
+    homeConfigurations = builtins.listToAttrs (map userHomeConfig users);
+  };
 }

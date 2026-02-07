@@ -4,15 +4,13 @@
   pkgsLatest,
   username,
   ...
-}:
-{
+}: {
   home.username = username;
   home.homeDirectory = "/home/${username}";
   programs.home-manager.enable = true;
   news.display = "silent";
 
   imports = [
-    # ./modules/m2.nix
     ./modules/pipx.nix
     ./modules/sdkman.nix
   ];

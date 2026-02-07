@@ -1,5 +1,4 @@
-{ pkgs, ... }:
-{
+{pkgs, ...}: {
   home.packages = with pkgs; [
     python311Packages.pipx
   ];
@@ -22,7 +21,7 @@
         "writeBoundary"
         "installPackages"
       ];
-      before = [ ];
+      before = [];
       data = ''
         # Create pipx directories if they don't exist
         mkdir -p $HOME/.local/bin

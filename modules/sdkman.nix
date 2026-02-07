@@ -1,9 +1,7 @@
-{ pkgs, ... }:
-let
+{pkgs, ...}: let
   sdkmanDir = "$HOME/.sdkman";
   curlBin = "${pkgs.curl}/bin/curl";
-in
-{
+in {
   # Ensure dependencies needed by SDKMAN! itself
   home.packages = with pkgs; [
     curl
@@ -14,8 +12,8 @@ in
 
   # Make SDKMAN! available during activation (after packages are installed).
   home.activation.installSdkman = {
-    after = [ "installPackages" ];
-    before = [ ];
+    after = ["installPackages"];
+    before = [];
     data = ''
       if [ -d "${sdkmanDir}" ] && [ -s "${sdkmanDir}/bin/sdkman-init.sh" ]; then
           echo "SDKMAN! already installed."
