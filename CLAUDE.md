@@ -4,37 +4,32 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-Declarative development environment for team Aplicações using Nix flakes and Home Manager. Replaces the imperative onboarding process (SDKMAN, NVM, manual apt installs) with reproducible, per-user configurations.
-
-Language versions (Java, Node, etc.) are NOT managed here — they belong in per-project `devenv.nix` files. This repo provides the base tooling every developer needs.
+Declarative development environment for team Aplicações using Nix flakes and Home Manager. Each developer forks this repo and customizes their own packages. Language versions (Java, Node, etc.) belong in per-project `devenv.nix` files — this repo provides base tooling.
 
 ## Architecture
 
 ```
-flake.nix                       # Entry point, user list, three nixpkgs channels
-home.nix                        # Base config for ALL users (packages + module imports)
+flake.nix          # Entry point, three nixpkgs channels, username from $USER
+home.nix           # All packages and module imports
 modules/
-  npmrc.nix                     # Deploys .npmrc template via activation (won't overwrite)
-users/{username}/
-  default.nix                   # User entry point (imports pkgs.nix)
-  pkgs.nix                      # User-specific package additions
+  npmrc.nix        # Deploys .npmrc template via activation (won't overwrite)
 ```
 
-**Three nixpkgs channels** available in all modules:
+**Three nixpkgs channels** available:
 - `pkgs` — stable (nixos-25.05), default choice
 - `pkgsUnstable` — nixos-unstable
 - `pkgsLatest` — independently pinned bleeding edge (`nix flake update nixpkgs-latest`)
 
-**Module pattern**: modules use `home.activation` for one-time file deployments (copy if not exists) rather than `home.file` symlinks, so users can modify files locally after initial setup.
+**Module pattern**: `home.activation` for one-time file deployments (copy if not exists), not `home.file` symlinks — users can modify files locally after initial setup.
 
 ## Commands
 
 ```bash
-# Apply configuration
-nix run home-manager -- switch --flake .#username@x86_64-linux
+# Apply configuration (--impure needed for $USER detection)
+nix run home-manager -- switch --flake .#default --impure
 
-# Dry build (test without activating)
-nix build .#homeConfigurations.username@x86_64-linux.activationPackage
+# Dry build
+nix build .#homeConfigurations.default.activationPackage --impure
 
 # Format nix files
 alejandra .
@@ -46,19 +41,12 @@ nix flake update
 nix flake update nixpkgs-latest
 ```
 
-## Adding a User
-
-1. Add `{ username = "name"; }` to the `users` list in `flake.nix`
-2. Create `users/name/default.nix` importing `./pkgs.nix`
-3. Create `users/name/pkgs.nix` with user-specific packages
-4. Run `nix run home-manager -- switch --flake .#name@x86_64-linux`
-
 ## Per-Project Dev Environments
 
-Projects use `devenv.nix` for language-specific tooling. Common patterns from existing repos:
+Projects use `devenv.nix` for language-specific tooling:
 
 ```nix
-# Java + Maven project (e.g., api-opera, api-autorizacoes)
+# Java + Maven (e.g., api-opera, api-autorizacoes)
 { pkgs, ... }: {
   languages.java = {
     enable = true;
@@ -68,11 +56,11 @@ Projects use `devenv.nix` for language-specific tooling. Common patterns from ex
   cachix.enable = false;
 }
 
-# Node.js project (e.g., app-aplicacoes)
+# Node.js (e.g., app-aplicacoes)
 { pkgs, ... }: {
   packages = with pkgs; [ nodejs_20 yarn ];
   cachix.enable = false;
 }
 ```
 
-Activate with `devenv shell` or automatically via `direnv` (add `devenv` to `.envrc`).
+Activate with `devenv shell` or automatically via `direnv`.
