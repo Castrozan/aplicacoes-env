@@ -10,6 +10,10 @@
       url = "github:nix-community/home-manager/release-25.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    agenix = {
+      url = "github:ryantm/agenix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -18,6 +22,7 @@
       nixpkgs-unstable,
       nixpkgs-latest,
       home-manager,
+      agenix,
       ...
     }:
     let
@@ -51,6 +56,7 @@
       homeManagerModules = {
         packages = ./home/pkgs.nix;
         modules = ./home/modules.nix;
+        secrets = ./home/modules/agenix.nix;
         default = {
           imports = [
             ./home/pkgs.nix
@@ -63,6 +69,7 @@
         inherit pkgs;
         extraSpecialArgs = specialArgsBase;
         modules = [
+          agenix.homeManagerModules.default
           ./home/core.nix
           ./home/modules.nix
           ./home/pkgs.nix

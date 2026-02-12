@@ -27,6 +27,15 @@ RUN mkdir -p ~/.config/nix && \
 COPY --chown=${TEST_USER}:${TEST_USER} . /src
 WORKDIR /src
 
+RUN mkdir -p ~/.ssh && \
+    cp tests/test-key ~/.ssh/id_ed25519 && \
+    chmod 600 ~/.ssh/id_ed25519
+
+ENV XDG_RUNTIME_DIR=/run/user/1000
+USER root
+RUN mkdir -p /run/user/1000 && chown ${TEST_USER}:${TEST_USER} /run/user/1000
+USER ${TEST_USER}
+
 RUN rm -f ~/.profile ~/.bashrc
 
 RUN cd /src && nix flake update --accept-flake-config 2>/dev/null || nix flake update
@@ -50,9 +59,22 @@ RUN set -e && \
     command -v direnv && echo "direnv: installed" && \
     command -v uv && echo "uv: installed" && \
     command -v alejandra && echo "alejandra: installed" && \
+    command -v agenix && echo "agenix: installed" && \
     echo "=== Verifying .npmrc ===" && \
     test -f ~/.npmrc && echo "ok: .npmrc deployed" && \
     grep -q "nexus3.betha.com.br" ~/.npmrc && echo "ok: .npmrc has nexus registry" && \
+    echo "=== Triggering agenix decryption ===" && \
+    AGENIX_EXEC=$(grep -oP 'ExecStart=\K.*' ~/.config/systemd/user/agenix.service) && \
+    eval "$AGENIX_EXEC" && \
+    echo "=== Verifying decrypted secrets ===" && \
+    test -f "$XDG_RUNTIME_DIR/agenix/npm-auth-token" && echo "ok: npm-auth-token decrypted" && \
+    test -f "$XDG_RUNTIME_DIR/agenix/gitlab-deploy-token" && echo "ok: gitlab-deploy-token decrypted" && \
+    test -f "$XDG_RUNTIME_DIR/agenix/aws-credentials" && echo "ok: aws-credentials decrypted" && \
+    echo "=== Injecting npm auth token ===" && \
+    INJECT_EXEC=$(grep -oP 'ExecStart=\K.*' ~/.config/systemd/user/inject-npm-auth.service) && \
+    eval "$INJECT_EXEC" && \
+    echo "=== Verifying .npmrc auth token ===" && \
+    grep -q "_authToken" ~/.npmrc && echo "ok: .npmrc has _authToken" && \
     echo "=== DEPLOYMENT TEST PASSED ==="
 
 CMD ["bash"]

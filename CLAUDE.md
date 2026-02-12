@@ -15,13 +15,19 @@ home/
   pkgs.nix             # All directly installed packages
   modules.nix          # Imports all modules from home/modules/
   modules/
+    agenix.nix         # Encrypted secrets (age.identityPaths, age.secrets)
     git.nix            # programs.git with delta pager, betha email
-    npmrc.nix          # Deploys .npmrc via activation (won't overwrite existing)
+    npmrc.nix          # Deploys .npmrc via activation + auth token injection service
     shell.nix          # EKS aliases, session variables, PATH
     ssh.nix            # SSH matchBlocks for gitlab/github
+secrets/
+  secrets.nix          # Public key registry for agenix
+  *.age                # Encrypted secret files
 tests/
   Dockerfile           # Quick eval test (Ubuntu 24.04 + Nix)
-  Dockerfile.full      # Full deployment test (home-manager activation)
+  Dockerfile.full      # Full deployment test (home-manager activation + agenix)
+  test-key / test-key.pub  # CI-only test keypair (no security value)
+  encrypt-test-secrets.sh  # Regenerate test .age files
   test-nix.sh          # Test runner script
 docker-compose.yml     # Test service definitions
 Makefile               # make test, make lint, make switch, etc.
@@ -79,6 +85,35 @@ git config core.hooksPath .githooks
 
 Checks: `statix`, `deadnix`, `nixfmt-rfc-style --check`, and a `nix build` validation. Skip with `SKIP_HOOKS=1`.
 
+## Secrets Management (agenix)
+
+Encrypted secrets via [agenix](https://github.com/ryantm/agenix) using `agenix.homeManagerModules.default`. Secrets are decrypted by a **systemd user service** at login, not during `home-manager switch`.
+
+**Current secrets**: `npm-auth-token`, `gitlab-deploy-token`, `aws-credentials`
+
+**How it works**:
+- `secrets/secrets.nix` lists public keys that can encrypt/decrypt each secret
+- `secrets/*.age` are age-encrypted files (committed to git)
+- `home/modules/agenix.nix` defines `age.identityPaths` and `age.secrets`
+- At login, `agenix.service` decrypts to `$XDG_RUNTIME_DIR/agenix/`
+- `inject-npm-auth.service` runs after agenix to append `_authToken` to `.npmrc`
+
+**Adding a new secret**:
+```bash
+agenix -e secrets/new-secret.age
+```
+
+**Re-keying after adding/removing a user key**:
+1. Update `secrets/secrets.nix` with the new key
+2. Run `agenix -r` from the repo root (requires one existing authorized key)
+
+**Adding a new team member**:
+1. Get their SSH ed25519 public key
+2. Add to `secrets/secrets.nix`
+3. Re-key: `agenix -r`
+
+**CI test key**: `tests/test-key` is a committed ephemeral keypair with no security value — it only decrypts test placeholder values for Docker CI verification.
+
 ## Per-Project Dev Environments
 
 Projects use `devenv.nix` for language-specific tooling:
@@ -117,7 +152,8 @@ imports = [ inputs.aplicacoes-env.homeManagerModules.default ];
 # Or import selectively:
 imports = [
   inputs.aplicacoes-env.homeManagerModules.packages  # only packages
-  inputs.aplicacoes-env.homeManagerModules.modules    # only modules (git, ssh, shell, npmrc)
+  inputs.aplicacoes-env.homeManagerModules.modules    # only modules (git, ssh, shell, npmrc, agenix)
+  inputs.aplicacoes-env.homeManagerModules.secrets    # only agenix secrets config
 ];
 ```
 

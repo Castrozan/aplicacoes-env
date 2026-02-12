@@ -1,6 +1,7 @@
 {
   pkgs,
   pkgsLatest,
+  inputs,
   ...
 }:
 {
@@ -28,5 +29,7 @@
     alejandra
     nixd
     nixfmt-rfc-style
+
+    inputs.agenix.packages.${pkgs.system}.default
   ];
 }
