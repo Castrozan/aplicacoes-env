@@ -19,7 +19,6 @@
   outputs =
     inputs@{
       nixpkgs,
-      nixpkgs-unstable,
       nixpkgs-latest,
       home-manager,
       agenix,
@@ -33,10 +32,6 @@
         inherit system;
         config.allowUnfree = true;
       };
-      pkgsUnstable = import nixpkgs-unstable {
-        inherit system;
-        config.allowUnfree = true;
-      };
       pkgsLatest = import nixpkgs-latest {
         inherit system;
         config.allowUnfree = true;
@@ -44,7 +39,6 @@
       specialArgsBase = {
         inherit
           pkgs
-          pkgsUnstable
           pkgsLatest
           version
           inputs
@@ -53,6 +47,17 @@
       };
     in
     {
+      homeConfigurations."${username}@${system}" = home-manager.lib.homeManagerConfiguration {
+        inherit pkgs;
+        extraSpecialArgs = specialArgsBase;
+        modules = [
+          agenix.homeManagerModules.default
+          ./home/core.nix
+          ./home/modules.nix
+          ./home/pkgs.nix
+        ];
+      };
+
       homeManagerModules = {
         packages = ./home/pkgs.nix;
         modules = ./home/modules.nix;
@@ -63,17 +68,6 @@
             ./home/modules.nix
           ];
         };
-      };
-
-      homeConfigurations."${username}@${system}" = home-manager.lib.homeManagerConfiguration {
-        inherit pkgs;
-        extraSpecialArgs = specialArgsBase;
-        modules = [
-          agenix.homeManagerModules.default
-          ./home/core.nix
-          ./home/modules.nix
-          ./home/pkgs.nix
-        ];
       };
     };
 }

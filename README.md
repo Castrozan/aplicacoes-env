@@ -56,8 +56,8 @@ Activate with `devenv shell`.
 
 | Module | What it does |
 |--------|-------------|
-| `git.nix` | `programs.git` with delta pager, betha email, rebase on pull |
-| `ssh.nix` | SSH matchBlocks for gitlab.services.betha.cloud and github.com |
+| `git.nix` | Deploys `.gitconfig` on first activation (delta pager, betha email, rebase on pull) |
+| `ssh.nix` | Deploys `~/.ssh/config` on first activation (gitlab.services.betha.cloud, github.com) |
 | `shell.nix` | EKS aliases (`eks-login`, `eks-test`, `eks-prod`), `~/.local/bin` in PATH |
 | `npmrc.nix` | Deploys `.npmrc` with nexus registry on first activation |
 | `agenix.nix` | Encrypted secrets decrypted at login via systemd user service |
@@ -67,7 +67,6 @@ Activate with `devenv shell`.
 | Channel | Source | When to use |
 |---------|--------|-------------|
 | `pkgs` | nixos-25.05 | Default choice for most packages |
-| `pkgsUnstable` | nixos-unstable | When stable is too old |
 | `pkgsLatest` | Independently pinned | Bleeding edge (`nix flake update nixpkgs-latest`) |
 
 ## Secrets Management
@@ -135,4 +134,4 @@ imports = [
 ];
 ```
 
-The consuming flake must provide `pkgs`, `pkgsUnstable`, `pkgsLatest`, `version`, `inputs`, and `username` via `extraSpecialArgs`.
+The consuming flake must provide `pkgs`, `pkgsLatest`, `version`, `inputs`, and `username` via `extraSpecialArgs`.
