@@ -4,124 +4,75 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-This repository manages development environment configurations for the Aplicações team using Nix and Home Manager. It provides declarative, reproducible user environments with shared base packages and user-specific customizations.
+Declarative development environment for team Aplicações using Nix flakes and Home Manager. Replaces the imperative onboarding process (SDKMAN, NVM, manual apt installs) with reproducible, per-user configurations.
+
+Language versions (Java, Node, etc.) are NOT managed here — they belong in per-project `devenv.nix` files. This repo provides the base tooling every developer needs.
 
 ## Architecture
 
-The configuration uses a **multi-user pattern** where each team member gets their own isolated Home Manager configuration while sharing common packages and modules.
+```
+flake.nix                       # Entry point, user list, three nixpkgs channels
+home.nix                        # Base config for ALL users (packages + module imports)
+modules/
+  npmrc.nix                     # Deploys .npmrc template via activation (won't overwrite)
+users/{username}/
+  default.nix                   # User entry point (imports pkgs.nix)
+  pkgs.nix                      # User-specific package additions
+```
 
-### Key Components
+**Three nixpkgs channels** available in all modules:
+- `pkgs` — stable (nixos-25.05), default choice
+- `pkgsUnstable` — nixos-unstable
+- `pkgsLatest` — independently pinned bleeding edge (`nix flake update nixpkgs-latest`)
 
-- **`flake.nix`**: Entry point that orchestrates everything
-  - Defines three nixpkgs inputs: stable (25.05), unstable, and latest
-  - Contains a `users` list where team members are registered
-  - Generates a homeConfiguration for each user in the format `username@x86_64-linux`
-  - Makes all three package sets available as `pkgs`, `pkgsUnstable`, and `pkgsLatest`
+**Module pattern**: modules use `home.activation` for one-time file deployments (copy if not exists) rather than `home.file` symlinks, so users can modify files locally after initial setup.
 
-- **`home.nix`**: Base configuration applied to ALL users
-  - Imports shared modules (pipx, sdkman)
-  - Defines common packages used by the entire team
-  - Sets up home-manager basics (username, homeDirectory)
+## Commands
 
-- **`users/{username}/`**: User-specific configurations
-  - `default.nix`: Entry point that imports user-specific modules
-  - `pkgs.nix`: Additional packages for this specific user
-  - Users can override or extend the base configuration here
-
-- **`modules/`**: Reusable configuration modules
-  - `pipx.nix`: Python package manager setup with PATH configuration
-  - `sdkman.nix`: JVM tooling manager (installs via activation script)
-  - `m2.nix`: Maven configuration (currently commented out in home.nix)
-
-- **`dotfiles/`**: Configuration files symlinked into user homes
-  - `.m2/`: Maven settings template
-
-### Package Selection Strategy
-
-Use the appropriate package set based on stability needs:
-- `pkgs`: Stable packages from nixos-25.05 (default choice)
-- `pkgsUnstable`: Newer packages from nixos-unstable
-- `pkgsLatest`: Bleeding edge packages (manually updated via `nix flake update nixpkgs-latest`)
-
-## Common Commands
-
-### Building and Activating
-
-Build and activate a user's configuration:
 ```bash
+# Apply configuration
 nix run home-manager -- switch --flake .#username@x86_64-linux
-```
 
-Build without activating (useful for testing):
-```bash
+# Dry build (test without activating)
 nix build .#homeConfigurations.username@x86_64-linux.activationPackage
-```
 
-### Managing Users
-
-1. Add a new user to the `users` list in `flake.nix`:
-```nix
-users = [
-  { username = "lucas.zanoni"; }
-  { username = "new.user"; }
-];
-```
-
-2. Create their user directory:
-```bash
-mkdir -p users/new.user
-```
-
-3. Create `users/new.user/default.nix`:
-```nix
-{ ... }:
-{
-  imports = [
-    ./pkgs.nix
-  ];
-}
-```
-
-4. Create `users/new.user/pkgs.nix` for user-specific packages
-
-### Formatting
-
-Format all Nix files using the project's standard formatter:
-```bash
+# Format nix files
 alejandra .
-```
 
-Alternative formatters available: `nixfmt-rfc-style`, `nixd`
-
-### Updating Dependencies
-
-Update all flake inputs:
-```bash
+# Update all inputs
 nix flake update
-```
 
-Update only the latest packages:
-```bash
+# Update only bleeding edge packages
 nix flake update nixpkgs-latest
 ```
 
-## Module Development
+## Adding a User
 
-When creating new modules in `modules/`:
+1. Add `{ username = "name"; }` to the `users` list in `flake.nix`
+2. Create `users/name/default.nix` importing `./pkgs.nix`
+3. Create `users/name/pkgs.nix` with user-specific packages
+4. Run `nix run home-manager -- switch --flake .#name@x86_64-linux`
 
-- **For simple package additions**: Just add packages to a list (see `pipx.nix`)
-- **For tools requiring installation scripts**: Use `home.activation` (see `sdkman.nix`)
-- **For dotfile management**: Use `home.file.{name}.source` to symlink files (see `m2.nix`)
+## Per-Project Dev Environments
 
-All modules receive standard arguments: `pkgs`, `pkgsUnstable`, `pkgsLatest`, `username`, `inputs`
+Projects use `devenv.nix` for language-specific tooling. Common patterns from existing repos:
 
-After creating a module, import it in either:
-- `home.nix` (for all users)
-- `users/{username}/default.nix` (for specific users)
+```nix
+# Java + Maven project (e.g., api-opera, api-autorizacoes)
+{ pkgs, ... }: {
+  languages.java = {
+    enable = true;
+    jdk.package = pkgs.jdk21;  # or pkgs.jdk8
+    maven.enable = true;
+  };
+  cachix.enable = false;
+}
 
-## Important Notes
+# Node.js project (e.g., app-aplicacoes)
+{ pkgs, ... }: {
+  packages = with pkgs; [ nodejs_20 yarn ];
+  cachix.enable = false;
+}
+```
 
-- The m2 module is currently commented out in `home.nix` (line 15)
-- All configurations target `x86_64-linux` architecture
-- Unfree packages are allowed via `config.allowUnfree = true`
-- Home Manager news display is silenced via `news.display = "silent"`
+Activate with `devenv shell` or automatically via `direnv` (add `devenv` to `.envrc`).
