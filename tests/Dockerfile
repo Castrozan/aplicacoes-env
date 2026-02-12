@@ -4,6 +4,8 @@
 FROM ubuntu:24.04
 
 ENV DEBIAN_FRONTEND=noninteractive
+ARG TEST_USER=testuser
+ENV USER=${TEST_USER}
 
 RUN apt-get update -qq && \
     apt-get install -y -qq curl xz-utils sudo git && \
@@ -29,8 +31,8 @@ CMD ["bash", "-c", "\
   nix flake metadata && \
   echo '' && \
   echo '=== Checking flake outputs ===' && \
-  USERS=$(nix eval .#homeConfigurations --impure --apply 'x: builtins.attrNames x' --json) && \
-  echo \"homeConfigurations: $USERS\" && \
+  CONFIGS=$(nix eval .#homeConfigurations --impure --apply 'x: builtins.attrNames x' --json) && \
+  echo \"homeConfigurations: $CONFIGS\" && \
   echo '' && \
   echo '=== Evaluating home config ===' && \
   nix eval '.#homeConfigurations.\"'$USER'@x86_64-linux\".config.home.username' --impure --json && \
