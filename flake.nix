@@ -48,7 +48,7 @@
       };
     in
     {
-      homeConfigurations.default = home-manager.lib.homeManagerConfiguration {
+      homeConfigurations."${username}@${system}" = home-manager.lib.homeManagerConfiguration {
         inherit pkgs;
         extraSpecialArgs = specialArgsBase;
         modules = [

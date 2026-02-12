@@ -31,10 +31,10 @@ home/
 
 ```bash
 # Apply configuration (--impure needed for $USER detection)
-nix run home-manager -- switch --flake .#default --impure
+nix run home-manager -- switch --flake .#"$USER@x86_64-linux" --impure
 
 # Dry build
-nix build .#homeConfigurations.default.activationPackage --impure --no-link
+nix build .#homeConfigurations."$USER@x86_64-linux".activationPackage --impure --no-link
 
 # Format nix files
 alejandra .

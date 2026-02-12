@@ -28,6 +28,6 @@ run_check "nixfmt" \
   bash -c "find . -name '*.nix' -not -path './result*' -exec nix run nixpkgs#nixfmt-rfc-style -- --check {} +"
 
 run_check "build" \
-  nix build '.#homeConfigurations.default.activationPackage' --impure --no-link
+  nix build ".#homeConfigurations.\"${USER}@$(uname -m)-linux\".activationPackage" --impure --no-link
 
 echo "All pre-push checks passed."
