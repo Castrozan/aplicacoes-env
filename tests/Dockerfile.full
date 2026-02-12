@@ -1,0 +1,58 @@
+# Full deployment test: Ubuntu 24.04 + Nix + home-manager
+# Validates complete home-manager activation on a production-like environment.
+
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update -qq && \
+    apt-get install -y -qq --no-install-recommends \
+        curl xz-utils ca-certificates git sudo \
+    && rm -rf /var/lib/apt/lists/*
+
+ARG TEST_USER=testuser
+RUN useradd -m -s /bin/bash ${TEST_USER}
+
+RUN mkdir -p /nix && chown ${TEST_USER} /nix
+USER ${TEST_USER}
+ENV USER=${TEST_USER}
+RUN curl -L https://nixos.org/nix/install | bash -s -- --no-daemon
+
+ENV PATH="/home/${TEST_USER}/.nix-profile/bin:${PATH}"
+ENV NIX_PATH="nixpkgs=channel:nixos-unstable"
+
+RUN mkdir -p ~/.config/nix && \
+    echo "experimental-features = nix-command flakes" > ~/.config/nix/nix.conf
+
+COPY --chown=${TEST_USER}:${TEST_USER} . /src
+WORKDIR /src
+
+RUN rm -f ~/.profile ~/.bashrc
+
+RUN cd /src && nix flake update --accept-flake-config 2>/dev/null || nix flake update
+
+RUN set -e && \
+    echo "=== Nix version ===" && nix --version && \
+    echo "=== Evaluating flake ===" && \
+    nix flake metadata && \
+    echo "=== Building home-manager config ===" && \
+    nix build ".#homeConfigurations.\"${TEST_USER}@x86_64-linux\".activationPackage" --impure --no-link --print-build-logs && \
+    echo "=== Activating ===" && \
+    nix run ".#homeConfigurations.\"${TEST_USER}@x86_64-linux\".activationPackage" --impure && \
+    echo "=== Verifying packages ===" && \
+    . ~/.nix-profile/etc/profile.d/hm-session-vars.sh 2>/dev/null || true && \
+    command -v git && git --version && \
+    command -v curl && echo "curl: installed" && \
+    command -v kubectl && echo "kubectl: installed" && \
+    command -v aws && echo "awscli: installed" && \
+    command -v k9s && echo "k9s: installed" && \
+    command -v devenv && echo "devenv: installed" && \
+    command -v direnv && echo "direnv: installed" && \
+    command -v uv && echo "uv: installed" && \
+    command -v alejandra && echo "alejandra: installed" && \
+    echo "=== Verifying .npmrc ===" && \
+    test -f ~/.npmrc && echo "ok: .npmrc deployed" && \
+    grep -q "nexus3.betha.com.br" ~/.npmrc && echo "ok: .npmrc has nexus registry" && \
+    echo "=== DEPLOYMENT TEST PASSED ==="
+
+CMD ["bash"]

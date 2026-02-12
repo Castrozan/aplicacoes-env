@@ -1,68 +1,67 @@
-# Makefile for managing aplicacoes-env project
+.PHONY: help test test-eval test-full fmt lint clean build build-full run shell switch
 
-.PHONY: help
 help:
-	@echo "Available targets:"
-	@echo "  make build USER=username      - Build configuration for a user"
-	@echo "  make switch USER=username     - Build and activate configuration for a user"
-	@echo "  make test                     - Run all tests"
-	@echo "  make lint                     - Check code formatting"
-	@echo "  make format                   - Format all Nix files with alejandra"
-	@echo "  make update                   - Update flake inputs"
-	@echo "  make update-latest            - Update only nixpkgs-latest"
-	@echo "  make clean                    - Remove build artifacts"
+	@echo "Aplicacoes Env - Development Commands"
+	@echo ""
+	@echo "Testing:"
+	@echo "  make test           - Run all tests (eval + full deployment)"
+	@echo "  make test-eval      - Quick flake evaluation test (Docker)"
+	@echo "  make test-full      - Full deployment test with home-manager (Docker)"
+	@echo ""
+	@echo "Docker:"
+	@echo "  make build          - Build quick evaluation test image"
+	@echo "  make build-full     - Build full deployment test image"
+	@echo "  make run            - Run full deployment container interactively"
+	@echo "  make shell          - Get a shell in the test container"
+	@echo ""
+	@echo "Usage:"
+	@echo "  make switch         - Build and activate configuration"
+	@echo ""
+	@echo "Linting & Formatting:"
+	@echo "  make lint           - Run Nix linters (statix, deadnix, nixfmt check)"
+	@echo "  make fmt            - Format Nix files"
+	@echo ""
+	@echo "Cleanup:"
+	@echo "  make clean          - Remove build artifacts and Docker images"
 
-.PHONY: build
-build:
-	@if [ -z "$(USER)" ]; then \
-		echo "Error: USER variable is required. Usage: make build USER=lucas.zanoni"; \
-		exit 1; \
-	fi
-	@echo "Building configuration for $(USER) (dry-run)..."
-	nix run home-manager -- build --flake .#$(USER)@x86_64-linux
-
-.PHONY: switch
 switch:
-	@if [ -z "$(USER)" ]; then \
-		echo "Error: USER variable is required. Usage: make switch USER=lucas.zanoni"; \
-		exit 1; \
-	fi
-	@echo "Building and activating configuration for $(USER)..."
-	nix run home-manager -- switch --flake .#$(USER)@x86_64-linux
+	nix run home-manager -- switch --flake '.#"$(USER)@x86_64-linux"' --impure
 
-.PHONY: test
-test:
-	@echo "Running tests..."
-	@chmod +x tests/*.sh
-	./tests/run-tests.sh
+test: test-eval test-full
 
-.PHONY: lint
+test-eval: build
+	@echo "=== Quick Flake Evaluation Test ==="
+	docker compose run --rm test-eval
+
+test-full: build-full
+	@echo "=== Full Deployment Test ==="
+	docker compose run --rm test-full
+
+build:
+	@echo "=== Building Quick Test Image ==="
+	docker compose build test-eval
+
+build-full:
+	@echo "=== Building Full Deployment Test Image ==="
+	docker compose build test-full
+
+run: build-full
+	@echo "=== Running Full Test Container ==="
+	docker compose run --rm test-full
+
+shell: build-full
+	@echo "=== Opening Shell in Test Container ==="
+	docker compose --profile shell run --rm shell
+
+fmt:
+	@find . -name '*.nix' -not -path './result*' -not -path './.git/*' -exec nixfmt {} +
+
 lint:
-	@echo "Checking code formatting..."
-	nix run nixpkgs#alejandra -- --check .
+	@statix check . --ignore 'result*'
+	@deadnix .
+	@find . -name '*.nix' -not -path './result*' -not -path './.git/*' -exec nixfmt --check {} +
 
-.PHONY: format
-format:
-	@echo "Formatting Nix files..."
-	nix run nixpkgs#alejandra -- .
-
-.PHONY: update
-update:
-	@echo "Updating all flake inputs..."
-	nix flake update
-
-.PHONY: update-latest
-update-latest:
-	@echo "Updating nixpkgs-latest..."
-	nix flake update nixpkgs-latest
-
-.PHONY: clean
 clean:
-	@echo "Cleaning build artifacts..."
 	rm -rf result result-*
-
-.PHONY: repl
-repl:
-	@echo "Starting Nix REPL..."
-	@echo "Tip: Use :lf .#homeConfigurations.lucas.zanoni@x86_64-linux to load a config"
-	nix repl
+	docker compose down --remove-orphans
+	docker rmi aplicacoes-env-test:eval aplicacoes-env-test:full 2>/dev/null || true

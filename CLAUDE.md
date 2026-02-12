@@ -16,6 +16,12 @@ home/
   modules.nix          # Imports all modules from home/modules/
   modules/
     npmrc.nix          # Deploys .npmrc via activation (won't overwrite existing)
+tests/
+  Dockerfile           # Quick eval test (Ubuntu 24.04 + Nix)
+  Dockerfile.full      # Full deployment test (home-manager activation)
+  test-nix.sh          # Test runner script
+docker-compose.yml     # Test service definitions
+Makefile               # make test, make lint, make switch, etc.
 .githooks/
   pre-push.sh          # statix, deadnix, nixfmt, build check
 ```
@@ -44,6 +50,20 @@ nix flake update
 
 # Update only bleeding edge packages
 nix flake update nixpkgs-latest
+```
+
+## Testing
+
+Two-tier Docker testing strategy (same pattern as openclaw-aplicacoes):
+
+```bash
+make test-eval    # Quick: flake evaluation only (fast)
+make test-full    # Full: home-manager activation on Ubuntu 24.04
+make test         # Both
+make shell        # Interactive debug container
+make lint         # statix + deadnix + nixfmt check
+make fmt          # Format nix files
+make switch       # Apply config to current user
 ```
 
 ## Pre-Push Checks

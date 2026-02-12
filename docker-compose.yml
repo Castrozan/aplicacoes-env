@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  test-eval:
+    build:
+      context: .
+      dockerfile: tests/Dockerfile
+    image: aplicacoes-env-test:eval
+    container_name: aplicacoes-env-test-eval
+    profiles: ["eval"]
+
+  test-full:
+    build:
+      context: .
+      dockerfile: tests/Dockerfile.full
+      args:
+        TEST_USER: testuser
+    image: aplicacoes-env-test:full
+    container_name: aplicacoes-env-test-full
+    profiles: ["full", "dev"]
+    stdin_open: true
+    tty: true
+    volumes:
+      - .:/src:ro
+    working_dir: /src
+
+  shell:
+    build:
+      context: .
+      dockerfile: tests/Dockerfile.full
+      args:
+        TEST_USER: testuser
+    image: aplicacoes-env-test:full
+    container_name: aplicacoes-env-shell
+    profiles: ["shell"]
+    stdin_open: true
+    tty: true
+    volumes:
+      - .:/src:ro
+    working_dir: /home/testuser
+    entrypoint: ["/bin/bash"]
