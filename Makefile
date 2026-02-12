@@ -25,7 +25,8 @@ help:
 	@echo "  make clean          - Remove build artifacts and Docker images"
 
 switch:
-	nix run home-manager -- switch --flake '.#"$(USER)@x86_64-linux"' --impure
+	@test -n "$(USER)" || { echo "Error: \$$USER is not set"; exit 1; }
+	nix run home-manager -- switch --flake ".#$(USER)@x86_64-linux" --impure
 
 test: test-eval test-full
 

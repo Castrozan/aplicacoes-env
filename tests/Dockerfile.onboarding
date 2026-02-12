@@ -1,0 +1,41 @@
+FROM ubuntu:24.04
+
+ARG TEST_USER=joao.silva
+
+RUN apt-get update -qq && \
+    apt-get install -y -qq --no-install-recommends \
+        curl xz-utils ca-certificates git sudo make && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN useradd -m -s /bin/bash ${TEST_USER} && \
+    echo "${TEST_USER} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers && \
+    mkdir -p /nix && chown ${TEST_USER} /nix
+
+USER ${TEST_USER}
+WORKDIR /home/${TEST_USER}
+RUN curl -L https://nixos.org/nix/install | bash -s -- --no-daemon
+ENV PATH="/home/${TEST_USER}/.nix-profile/bin:${PATH}"
+ENV USER=${TEST_USER}
+RUN mkdir -p ~/.config/nix && \
+    echo "experimental-features = nix-command flakes" > ~/.config/nix/nix.conf
+
+# Copy repo as /src (simulates git clone)
+COPY --chown=${TEST_USER}:${TEST_USER} . /src
+
+# Make /src a proper git repo (simulates what user would get from git clone)
+RUN cd /src && \
+    git config user.email "test@test.com" && \
+    git config user.name "test" && \
+    git init && git add -A && git commit -m "initial" --allow-empty 2>/dev/null || true
+
+# Pre-warm flake lock and commit so the tree stays clean
+RUN cd /src && \
+    (nix flake update --accept-flake-config 2>/dev/null || nix flake update) && \
+    git add -A && git commit -m "lock" --allow-empty 2>/dev/null || true
+
+# Remove any pre-existing dotfiles so we start truly clean
+RUN rm -f ~/.profile ~/.bashrc ~/.gitconfig ~/.npmrc
+RUN rm -rf ~/.ssh
+
+# Run the onboarding simulation
+RUN bash /src/tests/simulate-onboarding.sh

@@ -18,11 +18,8 @@
 
     awscli2
     docker-compose
-    insomnia
     k9s
     kubectl
-    postman
-    redisinsight
     ripgrep-all
     uv
 
