@@ -1,5 +1,4 @@
-{ ... }:
-{
+_: {
   imports = [
     ./modules/agenix.nix
     ./modules/git.nix

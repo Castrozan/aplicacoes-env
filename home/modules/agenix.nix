@@ -1,8 +1,4 @@
-{
-  config,
-  username,
-  ...
-}:
+{ username, ... }:
 let
   secretsPath = ../../secrets;
   hasNpmToken = builtins.pathExists (secretsPath + "/npm-auth-token.age");

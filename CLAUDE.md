@@ -44,4 +44,4 @@ make switch
 
 ## Formatting
 
-All nix files use alejandra. Run `alejandra .` or `make fmt`.
+All nix files use nixfmt (RFC style). Run `make fmt`.
