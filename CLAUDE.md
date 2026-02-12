@@ -9,13 +9,16 @@ Declarative development environment for team Aplicações using Nix flakes and H
 ## Architecture
 
 ```
-flake.nix              # Entry point, nixpkgs channels, $USER detection
+flake.nix              # Entry point, nixpkgs channels, $USER detection, homeManagerModules
 home/
   core.nix             # Home Manager basics (username, homeDirectory, stateVersion)
   pkgs.nix             # All directly installed packages
   modules.nix          # Imports all modules from home/modules/
   modules/
+    git.nix            # programs.git with delta pager, betha email
     npmrc.nix          # Deploys .npmrc via activation (won't overwrite existing)
+    shell.nix          # EKS aliases, session variables, PATH
+    ssh.nix            # SSH matchBlocks for gitlab/github
 tests/
   Dockerfile           # Quick eval test (Ubuntu 24.04 + Nix)
   Dockerfile.full      # Full deployment test (home-manager activation)
@@ -99,3 +102,23 @@ Projects use `devenv.nix` for language-specific tooling:
 ```
 
 Activate with `devenv shell` or automatically via `direnv`.
+
+## Consuming as Home Manager Module
+
+This flake exposes `homeManagerModules` for use in personal dotfiles:
+
+```nix
+# In your personal flake.nix inputs:
+aplicacoes-env.url = "github:your-org/aplicacoes-env";
+
+# In your home-manager modules:
+imports = [ inputs.aplicacoes-env.homeManagerModules.default ];
+
+# Or import selectively:
+imports = [
+  inputs.aplicacoes-env.homeManagerModules.packages  # only packages
+  inputs.aplicacoes-env.homeManagerModules.modules    # only modules (git, ssh, shell, npmrc)
+];
+```
+
+Modules receive `pkgs`, `pkgsUnstable`, `pkgsLatest`, `version`, `inputs`, and `username` via `extraSpecialArgs` — the consuming flake must provide these.
