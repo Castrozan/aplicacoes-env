@@ -9,13 +9,18 @@ Declarative development environment for team Aplicações using Nix flakes and H
 ## Architecture
 
 ```
-flake.nix          # Entry point, three nixpkgs channels, username from $USER
-home.nix           # All packages and module imports
-modules/
-  npmrc.nix        # Deploys .npmrc template via activation (won't overwrite)
+flake.nix              # Entry point, nixpkgs channels, $USER detection
+home/
+  core.nix             # Home Manager basics (username, homeDirectory, stateVersion)
+  pkgs.nix             # All directly installed packages
+  modules.nix          # Imports all modules from home/modules/
+  modules/
+    npmrc.nix          # Deploys .npmrc via activation (won't overwrite existing)
+.githooks/
+  pre-push.sh          # statix, deadnix, nixfmt, build check
 ```
 
-**Three nixpkgs channels** available:
+**Three nixpkgs channels** available via `specialArgsBase`:
 - `pkgs` — stable (nixos-25.05), default choice
 - `pkgsUnstable` — nixos-unstable
 - `pkgsLatest` — independently pinned bleeding edge (`nix flake update nixpkgs-latest`)
@@ -29,7 +34,7 @@ modules/
 nix run home-manager -- switch --flake .#default --impure
 
 # Dry build
-nix build .#homeConfigurations.default.activationPackage --impure
+nix build .#homeConfigurations.default.activationPackage --impure --no-link
 
 # Format nix files
 alejandra .
@@ -40,6 +45,16 @@ nix flake update
 # Update only bleeding edge packages
 nix flake update nixpkgs-latest
 ```
+
+## Pre-Push Checks
+
+Configured via `.githooks/pre-push.sh` (set `core.hooksPath` after cloning):
+
+```bash
+git config core.hooksPath .githooks
+```
+
+Checks: `statix`, `deadnix`, `nixfmt-rfc-style --check`, and a `nix build` validation. Skip with `SKIP_HOOKS=1`.
 
 ## Per-Project Dev Environments
 

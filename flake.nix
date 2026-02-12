@@ -23,6 +23,7 @@
     let
       system = "x86_64-linux";
       username = builtins.getEnv "USER";
+      version = "25.05";
       pkgs = import nixpkgs {
         inherit system;
         config.allowUnfree = true;
@@ -35,19 +36,26 @@
         inherit system;
         config.allowUnfree = true;
       };
+      specialArgsBase = {
+        inherit
+          pkgs
+          pkgsUnstable
+          pkgsLatest
+          version
+          inputs
+          username
+          ;
+      };
     in
     {
       homeConfigurations.default = home-manager.lib.homeManagerConfiguration {
         inherit pkgs;
-        extraSpecialArgs = {
-          inherit
-            inputs
-            username
-            pkgsUnstable
-            pkgsLatest
-            ;
-        };
-        modules = [ ./home.nix ];
+        extraSpecialArgs = specialArgsBase;
+        modules = [
+          ./home/core.nix
+          ./home/modules.nix
+          ./home/pkgs.nix
+        ];
       };
     };
 }

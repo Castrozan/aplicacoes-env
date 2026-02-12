@@ -1,20 +1,9 @@
 {
   pkgs,
   pkgsLatest,
-  username,
   ...
 }:
 {
-  home.username = username;
-  home.homeDirectory = "/home/${username}";
-  home.stateVersion = "25.05";
-  programs.home-manager.enable = true;
-  news.display = "silent";
-
-  imports = [
-    ./modules/npmrc.nix
-  ];
-
   home.packages = with pkgs; [
     curl
     git
