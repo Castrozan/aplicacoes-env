@@ -48,6 +48,17 @@
       };
     in
     {
+      homeManagerModules = {
+        packages = ./home/pkgs.nix;
+        modules = ./home/modules.nix;
+        default = {
+          imports = [
+            ./home/pkgs.nix
+            ./home/modules.nix
+          ];
+        };
+      };
+
       homeConfigurations."${username}@${system}" = home-manager.lib.homeManagerConfiguration {
         inherit pkgs;
         extraSpecialArgs = specialArgsBase;
