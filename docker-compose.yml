@@ -22,6 +22,14 @@ services:
       - .:/src:ro
     working_dir: /src
 
+  test-onboarding:
+    build:
+      context: .
+      dockerfile: tests/Dockerfile.onboarding
+    image: aplicacoes-env-test:onboarding
+    container_name: aplicacoes-env-test-onboarding
+    profiles: ["onboarding"]
+
   shell:
     build:
       context: .

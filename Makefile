@@ -1,4 +1,4 @@
-.PHONY: help test test-eval test-full fmt lint clean build build-full run shell switch
+.PHONY: help test test-eval test-full test-onboarding fmt lint clean build build-full build-onboarding run shell switch
 
 help:
 	@echo "Aplicacoes Env - Development Commands"
@@ -7,10 +7,12 @@ help:
 	@echo "  make test           - Run all tests (eval + full deployment)"
 	@echo "  make test-eval      - Quick flake evaluation test (Docker)"
 	@echo "  make test-full      - Full deployment test with home-manager (Docker)"
+	@echo "  make test-onboarding - Onboarding simulation test (Docker)"
 	@echo ""
 	@echo "Docker:"
 	@echo "  make build          - Build quick evaluation test image"
 	@echo "  make build-full     - Build full deployment test image"
+	@echo "  make build-onboarding - Build onboarding simulation image"
 	@echo "  make run            - Run full deployment container interactively"
 	@echo "  make shell          - Get a shell in the test container"
 	@echo ""
@@ -46,6 +48,14 @@ build-full:
 	@echo "=== Building Full Deployment Test Image ==="
 	docker compose build test-full
 
+test-onboarding: build-onboarding
+	@echo "=== Onboarding Simulation Test ==="
+	docker compose run --rm test-onboarding
+
+build-onboarding:
+	@echo "=== Building Onboarding Test Image ==="
+	docker compose build test-onboarding
+
 run: build-full
 	@echo "=== Running Full Test Container ==="
 	docker compose run --rm test-full
@@ -65,4 +75,4 @@ lint:
 clean:
 	rm -rf result result-*
 	docker compose down --remove-orphans
-	docker rmi aplicacoes-env-test:eval aplicacoes-env-test:full 2>/dev/null || true
+	docker rmi aplicacoes-env-test:eval aplicacoes-env-test:full aplicacoes-env-test:onboarding 2>/dev/null || true
