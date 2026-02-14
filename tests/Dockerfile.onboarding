@@ -24,9 +24,10 @@ COPY --chown=${TEST_USER}:${TEST_USER} . /src
 
 # Make /src a proper git repo (simulates what user would get from git clone)
 RUN cd /src && \
+    git init && \
     git config user.email "test@test.com" && \
     git config user.name "test" && \
-    git init && git add -A && git commit -m "initial" --allow-empty 2>/dev/null || true
+    git add -A && git commit -m "initial" --allow-empty 2>/dev/null || true
 
 # Pre-warm flake lock and commit so the tree stays clean
 RUN cd /src && \

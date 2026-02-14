@@ -1,0 +1,5 @@
+result
+result-*
+.git
+tests/test-key
+tests/test-key.pub

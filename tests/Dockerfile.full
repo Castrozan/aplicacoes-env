@@ -7,7 +7,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update -qq && \
     apt-get install -y -qq --no-install-recommends \
-        curl xz-utils ca-certificates git sudo \
+        curl xz-utils ca-certificates git sudo openssh-client \
     && rm -rf /var/lib/apt/lists/*
 
 ARG TEST_USER=testuser
@@ -30,8 +30,7 @@ WORKDIR /src
 RUN ssh-keygen -t ed25519 -f tests/test-key -N "" -C "ci-test-key" -q && \
     mkdir -p ~/.ssh && \
     cp tests/test-key ~/.ssh/id_ed25519 && \
-    chmod 600 ~/.ssh/id_ed25519 && \
-    bash tests/encrypt-test-secrets.sh
+    chmod 600 ~/.ssh/id_ed25519
 
 ENV XDG_RUNTIME_DIR=/run/user/1000
 USER root
@@ -41,6 +40,7 @@ USER ${TEST_USER}
 RUN rm -f ~/.profile ~/.bashrc
 
 RUN cd /src && nix flake update --accept-flake-config 2>/dev/null || nix flake update
+RUN nix shell nixpkgs#age -c bash tests/encrypt-test-secrets.sh
 
 RUN set -e && \
     echo "=== Nix version ===" && nix --version && \
