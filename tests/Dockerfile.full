@@ -27,9 +27,11 @@ RUN mkdir -p ~/.config/nix && \
 COPY --chown=${TEST_USER}:${TEST_USER} . /src
 WORKDIR /src
 
-RUN mkdir -p ~/.ssh && \
+RUN ssh-keygen -t ed25519 -f tests/test-key -N "" -C "ci-test-key" -q && \
+    mkdir -p ~/.ssh && \
     cp tests/test-key ~/.ssh/id_ed25519 && \
-    chmod 600 ~/.ssh/id_ed25519
+    chmod 600 ~/.ssh/id_ed25519 && \
+    bash tests/encrypt-test-secrets.sh
 
 ENV XDG_RUNTIME_DIR=/run/user/1000
 USER root

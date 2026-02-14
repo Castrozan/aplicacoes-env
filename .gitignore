@@ -15,4 +15,6 @@ Thumbs.db
 
 # Test artifacts
 tests/coverage/
+tests/test-key
+tests/test-key.pub
 *.log

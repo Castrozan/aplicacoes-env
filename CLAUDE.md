@@ -15,8 +15,8 @@ Standalone Home Manager flake (not NixOS). Provides base dev tooling for team Ap
 - `home/modules/ssh.nix` — deploys `~/.ssh/config` via `home.activation` (copy-if-not-exists). MatchBlocks for gitlab.services.betha.cloud and github.com.
 - `secrets/secrets.nix` — agenix public key registry. Lists authorized SSH pubkeys per secret.
 - `secrets/*.age` — age-encrypted files. Decrypted at login by `agenix.service` systemd user service to `$XDG_RUNTIME_DIR/agenix/`.
-- `tests/test-key` — committed CI keypair for Docker tests. No security value.
-- `tests/encrypt-test-secrets.sh` — regenerates test `.age` files using the CI test key.
+- `tests/encrypt-test-secrets.sh` — generates CI test keypair (if missing) and encrypts test `.age` files.
+- `tests/setup-vm-test.sh` — bare-metal setup script for manual VM testing.
 
 ## Key patterns
 

@@ -4,12 +4,33 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="$(dirname "$SCRIPT_DIR")"
 SECRETS_DIR="$REPO_DIR/secrets"
+TEST_KEY="$SCRIPT_DIR/test-key"
 TEST_PUBKEY="$SCRIPT_DIR/test-key.pub"
 
-if [ ! -f "$TEST_PUBKEY" ]; then
-  echo "Error: test public key not found at $TEST_PUBKEY"
-  exit 1
+if [ ! -f "$TEST_KEY" ]; then
+  echo "Generating CI test key pair..."
+  ssh-keygen -t ed25519 -f "$TEST_KEY" -N "" -C "ci-test-key@aplicacoes-env" -q
+  echo "  -> test-key + test-key.pub generated"
 fi
+
+CI_PUBKEY=$(cat "$TEST_PUBKEY")
+
+cat > "$SECRETS_DIR/secrets.nix" << NIXEOF
+let
+  lucas-zanoni = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPdOdWOmB7IhmU70+VwgUJ40MHCOwhhrDBn6rq/Fskq/";
+  ci-test = "$CI_PUBKEY";
+  all-keys = [
+    lucas-zanoni
+    ci-test
+  ];
+in
+{
+  "npm-auth-token.age".publicKeys = all-keys;
+  "gitlab-deploy-token.age".publicKeys = all-keys;
+  "aws-credentials.age".publicKeys = all-keys;
+}
+NIXEOF
+echo "  -> secrets.nix updated with CI test public key"
 
 RECIPIENT_ARGS=(-R "$TEST_PUBKEY")
 
