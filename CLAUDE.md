@@ -11,7 +11,7 @@ Standalone Home Manager flake (not NixOS). Provides base dev tooling for team Ap
 - `home/modules/agenix.nix` — agenix secret definitions. Uses `builtins.pathExists` so missing .age files don't break evaluation.
 - `home/modules/npmrc.nix` — deploys base `.npmrc` via `home.activation` (copy-if-not-exists pattern). Also defines `inject-npm-auth` systemd user service that runs after `agenix.service` to append `_authToken`.
 - `home/modules/git.nix` — deploys `.gitconfig` via `home.activation` (copy-if-not-exists). Delta pager, username-based email.
-- `home/modules/shell.nix` — EKS aliases, session variables, PATH additions.
+- `home/modules/shell.nix` — `programs.bash` with history config, team aliases (eza, bat, k9s, EKS), session variables, PATH additions, `~/.bashrc.local` sourcing.
 - `home/modules/ssh.nix` — deploys `~/.ssh/config` via `home.activation` (copy-if-not-exists). MatchBlocks for gitlab.services.betha.cloud and github.com.
 - `secrets/secrets.nix` — agenix public key registry. Lists authorized SSH pubkeys per secret.
 - `secrets/*.age` — age-encrypted files. Decrypted at login by `agenix.service` systemd user service to `$XDG_RUNTIME_DIR/agenix/`.

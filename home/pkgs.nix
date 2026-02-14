@@ -6,7 +6,9 @@
 }:
 {
   home.packages = with pkgs; [
+    bat
     curl
+    eza
     git
     gnutar
     unzip

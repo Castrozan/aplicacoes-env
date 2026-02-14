@@ -47,7 +47,7 @@ Activate with `devenv shell`.
 
 ### Packages
 
-- **Core:** git (with delta pager), curl, ripgrep-all, xclip, zip/unzip
+- **Core:** git (with delta pager), curl, ripgrep-all, bat, eza, xclip, zip/unzip
 - **Cloud/K8s:** awscli2, kubectl, k9s, docker-compose
 - **Dev Tools:** devenv, direnv, uv, insomnia, postman, redisinsight
 - **Nix Tooling:** alejandra, nixd, nixfmt-rfc-style, agenix
@@ -58,7 +58,7 @@ Activate with `devenv shell`.
 |--------|-------------|
 | `git.nix` | Deploys `.gitconfig` on first activation (delta pager, betha email, rebase on pull) |
 | `ssh.nix` | Deploys `~/.ssh/config` on first activation (gitlab.services.betha.cloud, github.com) |
-| `shell.nix` | EKS aliases (`eks-login`, `eks-test`, `eks-prod`), `~/.local/bin` in PATH |
+| `shell.nix` | Enables `programs.bash` with history config, team aliases (eza, bat, k9s, EKS), `~/.local/bin` in PATH, `~/.bashrc.local` sourcing |
 | `npmrc.nix` | Deploys `.npmrc` with nexus registry on first activation |
 | `agenix.nix` | Encrypted secrets decrypted at login via systemd user service |
 

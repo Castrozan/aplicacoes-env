@@ -48,8 +48,10 @@ check_cmd() {
 }
 
 echo "Core:"
-check_cmd git
+check_cmd bat
 check_cmd curl
+check_cmd eza
+check_cmd git
 check_cmd rga
 check_cmd xclip
 check_cmd zip
@@ -139,11 +141,24 @@ else
 fi
 echo ""
 
-echo "=== Verifying: shell aliases available ==="
-if [ -f "$HOME/.profile" ] || [ -f "$HOME/.bashrc" ]; then
-  echo "  ok: shell profile exists"
+echo "=== Verifying: bash managed by home-manager ==="
+if [ -f "$HOME/.bashrc" ]; then
+  echo "  ok: .bashrc exists"
+  if grep -q "HISTCONTROL" "$HOME/.bashrc"; then
+    echo "  ok: history config present"
+  else
+    echo "  FAIL: history config missing from .bashrc"
+    FAIL=1
+  fi
+  if grep -q "bashrc.local" "$HOME/.bashrc"; then
+    echo "  ok: .bashrc.local sourcing present"
+  else
+    echo "  FAIL: .bashrc.local sourcing missing from .bashrc"
+    FAIL=1
+  fi
 else
-  echo "  info: no .profile or .bashrc (shell aliases may be in nix-managed files)"
+  echo "  FAIL: .bashrc not deployed by home-manager"
+  FAIL=1
 fi
 echo ""
 

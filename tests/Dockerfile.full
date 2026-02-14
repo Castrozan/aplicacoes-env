@@ -58,11 +58,16 @@ RUN set -e && \
     command -v devenv && echo "devenv: installed" && \
     command -v direnv && echo "direnv: installed" && \
     command -v uv && echo "uv: installed" && \
+    command -v eza && echo "eza: installed" && \
+    command -v bat && echo "bat: installed" && \
     command -v alejandra && echo "alejandra: installed" && \
     command -v agenix && echo "agenix: installed" && \
     echo "=== Verifying .npmrc ===" && \
     test -f ~/.npmrc && echo "ok: .npmrc deployed" && \
     grep -q "nexus3.betha.com.br" ~/.npmrc && echo "ok: .npmrc has nexus registry" && \
+    echo "=== Verifying .bashrc ===" && \
+    test -f ~/.bashrc && echo "ok: .bashrc deployed" && \
+    grep -q "HISTCONTROL" ~/.bashrc && echo "ok: .bashrc has history config" && \
     echo "=== Triggering agenix decryption ===" && \
     AGENIX_EXEC=$(grep -oP 'ExecStart=\K.*' ~/.config/systemd/user/agenix.service) && \
     eval "$AGENIX_EXEC" && \
