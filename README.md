@@ -19,30 +19,6 @@ git config core.hooksPath .githooks
 make switch
 ```
 
-### 3. Per-project environments
-
-Language tooling lives in each project's `devenv.nix`, not here:
-
-```nix
-# Java + Maven
-{ pkgs, ... }: {
-  languages.java = {
-    enable = true;
-    jdk.package = pkgs.jdk21;
-    maven.enable = true;
-  };
-  cachix.enable = false;
-}
-
-# Node.js
-{ pkgs, ... }: {
-  packages = with pkgs; [ nodejs_20 yarn ];
-  cachix.enable = false;
-}
-```
-
-Activate with `devenv shell`.
-
 ## What's Included
 
 ### Packages
