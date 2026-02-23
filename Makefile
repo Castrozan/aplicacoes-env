@@ -26,9 +26,11 @@ help:
 	@echo "Cleanup:"
 	@echo "  make clean          - Remove build artifacts and Docker images"
 
+NIX_SYSTEM := $(shell nix eval --impure --expr 'builtins.currentSystem' --raw 2>/dev/null || echo "x86_64-linux")
+
 switch:
 	@test -n "$(USER)" || { echo "Error: \$$USER is not set"; exit 1; }
-	nix run home-manager -- switch --flake ".#$(USER)@x86_64-linux" --impure
+	nix run home-manager -- switch --flake ".#$(USER)@$(NIX_SYSTEM)" --impure
 
 test: test-eval test-full
 

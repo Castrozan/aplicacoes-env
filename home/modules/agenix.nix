@@ -1,4 +1,4 @@
-{ username, ... }:
+{ username, isDarwin, ... }:
 let
   secretsPath = ../../secrets;
   hasNpmToken = builtins.pathExists (secretsPath + "/npm-auth-token.age");
@@ -6,7 +6,11 @@ let
   hasAwsCredentials = builtins.pathExists (secretsPath + "/aws-credentials.age");
 in
 {
-  age.identityPaths = [ "/home/${username}/.ssh/id_ed25519" ];
+  age.identityPaths =
+    let
+      homePrefix = if isDarwin then "/Users" else "/home";
+    in
+    [ "${homePrefix}/${username}/.ssh/id_ed25519" ];
 
   age.secrets =
     { }

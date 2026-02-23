@@ -1,6 +1,8 @@
 # Aplicacoes Team - Development Environment
 
-Declarative development environment for team Aplicacoes using Nix flakes and Home Manager. Each developer forks this repo and customizes their own packages. 
+Declarative development environment for team Aplicacoes using Nix flakes and Home Manager. Forget everything you know about Nix — this is just a framework to configure apps and dotfiles. Each developer forks this repo and customizes their own packages.
+
+The entrypoint is `flake.nix`. It defines inputs (where packages come from), outputs (the home configuration applied to your user), and reusable modules for external consumption. Read it top to bottom — it is commented to explain every section.
 
 ## Quick Start
 
@@ -13,56 +15,41 @@ curl -L https://nixos.org/nix/install | sh -s -- --daemon
 ### 2. Clone and apply
 
 ```bash
-git clone <repository-url> ~/aplicacoes-env
+git clone https://github.com/Castrozan/aplicacoes-env ~/aplicacoes-env
 cd ~/aplicacoes-env
 git config core.hooksPath .githooks
 make switch
 ```
 
-## What's Included
+`make switch` detects the current system and runs `nix run home-manager -- switch --flake .#"$USER@$SYSTEM" --impure`. The `--impure` flag is required because `flake.nix` uses `builtins.getEnv "USER"` and `builtins.currentSystem` to auto-detect the current username and system architecture at evaluation time. This means the same flake works on both Linux (`x86_64-linux`) and macOS (`aarch64-darwin`, `x86_64-darwin`) without changes. On macOS, linux-only packages like `xclip` are excluded and systemd services are skipped.
 
-### Packages
+## How it works
 
-- **Core:** git (with delta pager), curl, ripgrep-all, bat, eza, xclip, zip/unzip
-- **Cloud/K8s:** awscli2, kubectl, k9s, docker-compose
-- **Dev Tools:** devenv, direnv, uv, insomnia, postman, redisinsight
-- **Nix Tooling:** alejandra, nixd, nixfmt-rfc-style, agenix
+`flake.nix` declares three sections:
 
-### Modules
+**Inputs** fetch package definitions and modules from the internet. There are three package channels — `nixpkgs` (stable, nixos-25.05) for most packages, `nixpkgs-unstable` for packages not yet in stable, and `nixpkgs-latest` for bleeding edge (update independently with `nix flake update nixpkgs-latest`). Home Manager and agenix are also declared as inputs, both following the same nixpkgs to avoid duplicate evaluations.
+
+**Outputs** define what this flake provides. The main output is a `homeConfigurations` entry that builds a standalone Home Manager configuration for the current user. It composes three module files: `home/core.nix` (username, home directory, state version), `home/pkgs.nix` (all installed packages), and `home/modules.nix` (imports everything from `home/modules/`). All modules receive shared variables (`pkgs`, `pkgsLatest`, `version`, `inputs`, `username`) via dependency injection through `specialArgs`.
+
+**homeManagerModules** expose individual pieces for consumption by personal dotfiles flakes — you can import packages only, modules only, secrets only, or the default (packages + modules).
+
+## Modules
+
+Modules live in `home/modules/`. Each one configures a specific tool or service using a copy-if-not-exists pattern via `home.activation` — files are deployed on first activation but never overwritten, so users can modify them locally after setup.
 
 | Module | What it does |
 |--------|-------------|
-| `git.nix` | Deploys `.gitconfig` on first activation (delta pager, betha email, rebase on pull) |
-| `ssh.nix` | Deploys `~/.ssh/config` on first activation (gitlab.services.betha.cloud, github.com) |
-| `shell.nix` | Enables `programs.bash` with history config, team aliases (eza, bat, k9s, EKS), `~/.local/bin` in PATH, `~/.bashrc.local` sourcing |
-| `npmrc.nix` | Deploys `.npmrc` with nexus registry on first activation |
+| `git.nix` | `.gitconfig` with delta pager, betha email, rebase on pull |
+| `ssh.nix` | `~/.ssh/config` for gitlab.services.betha.cloud and github.com |
+| `shell.nix` | `programs.bash` with history config, team aliases (eza, bat, k9s, EKS), PATH additions, `~/.bashrc.local` sourcing |
+| `npmrc.nix` | `.npmrc` with nexus registry, plus `inject-npm-auth` systemd service for token injection |
 | `agenix.nix` | Encrypted secrets decrypted at login via systemd user service |
-
-### Three Package Channels
-
-| Channel | Source | When to use |
-|---------|--------|-------------|
-| `pkgs` | nixos-25.05 | Default choice for most packages |
-| `pkgsLatest` | Independently pinned | Bleeding edge (`nix flake update nixpkgs-latest`) |
 
 ## Secrets Management
 
-Encrypted secrets via [agenix](https://github.com/ryantm/agenix). Secrets are decrypted by a systemd user service at login, not during `home-manager switch`.
+Encrypted secrets via [agenix](https://github.com/ryantm/agenix). The agenix Home Manager module runs a systemd user service at login (not during `home-manager switch`) that decrypts `.age` files to `$XDG_RUNTIME_DIR/agenix/`. The `inject-npm-auth` service runs after agenix to append `_authToken` to `.npmrc`.
 
-**Current secrets:** `npm-auth-token`, `gitlab-deploy-token`, `aws-credentials`
-
-### How it works
-
-1. `secrets/secrets.nix` lists public keys authorized to decrypt each secret
-2. `secrets/*.age` are age-encrypted files committed to git
-3. At login, `agenix.service` decrypts to `$XDG_RUNTIME_DIR/agenix/`
-4. `inject-npm-auth.service` runs after agenix to append `_authToken` to `.npmrc`
-
-### Adding a new secret
-
-```bash
-agenix -e secrets/new-secret.age
-```
+`secrets/secrets.nix` lists which public keys can decrypt each secret. To add a new secret: `agenix -e secrets/new-secret.age`.
 
 ## Commands
 
@@ -76,28 +63,13 @@ make lint         # statix + deadnix + nixfmt check
 make fmt          # Format nix files
 ```
 
-Direct nix commands:
-
-```bash
-nix run home-manager -- switch --flake .#"$USER@x86_64-linux" --impure
-nix build .#homeConfigurations."$USER@x86_64-linux".activationPackage --impure --no-link
-nix flake update
-nix flake update nixpkgs-latest
-```
-
-## Pre-Push Checks
-
-Configured via `.githooks/pre-push.sh`:
-
-Skip with `SKIP_HOOKS=1 git push`.
-
 ## Consuming as Home Manager Module
 
 This flake exposes `homeManagerModules` for use in personal dotfiles:
 
 ```nix
 # In your flake.nix inputs:
-aplicacoes-env.url = "github:your-org/aplicacoes-env";
+aplicacoes-env.url = "github:Castrozan/aplicacoes-env";
 
 # In your home-manager modules:
 imports = [ inputs.aplicacoes-env.homeManagerModules.default ];
@@ -111,3 +83,7 @@ imports = [
 ```
 
 The consuming flake must provide `pkgs`, `pkgsLatest`, `version`, `inputs`, and `username` via `extraSpecialArgs`.
+
+## Pre-Push Checks
+
+Configured via `.githooks/pre-push.sh`. Skip with `SKIP_HOOKS=1 git push`.

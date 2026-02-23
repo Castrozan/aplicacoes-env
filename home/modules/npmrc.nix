@@ -2,6 +2,7 @@
   pkgs,
   config,
   lib,
+  isLinux,
   ...
 }:
 let
@@ -47,7 +48,7 @@ in
     '';
   };
 
-  systemd.user.services = lib.mkIf hasNpmToken {
+  systemd.user.services = lib.mkIf (hasNpmToken && isLinux) {
     inject-npm-auth = {
       Unit = {
         Description = "Inject npm auth token from agenix secret";
