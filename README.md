@@ -1,18 +1,18 @@
-# Aplicacoes Team - Development Environment
+# Time Aplicacoes - Ambiente de Desenvolvimento
 
-Declarative development environment for team Aplicacoes using Nix flakes and Home Manager. Forget everything you know about Nix — this is just a framework to configure apps and dotfiles. Each developer forks this repo and customizes their own packages.
+Ambiente de desenvolvimento declarativo para o time Aplicacoes usando Nix flakes e Home Manager. Esqueça tudo que você sabe sobre Nix — isso é apenas um framework para configurar aplicativos e dotfiles. Cada desenvolvedor faz fork deste repositório e personaliza seus próprios pacotes.
 
-The entrypoint is `flake.nix`. It defines inputs (where packages come from), outputs (the home configuration applied to your user), and reusable modules for external consumption. Read it top to bottom — it is commented to explain every section.
+O ponto de entrada é `flake.nix`. Ele define inputs (de onde vêm os pacotes), outputs (a configuração home aplicada ao seu usuário) e módulos reutilizáveis para consumo externo. Leia de cima a baixo — está comentado para explicar cada seção.
 
-## Quick Start
+## Início Rápido
 
-### 1. Install Nix
+### 1. Instalar o Nix
 
 ```bash
 curl -L https://nixos.org/nix/install | sh -s -- --daemon
 ```
 
-### 2. Clone and apply
+### 2. Clonar e aplicar
 
 ```bash
 git clone https://github.com/Castrozan/aplicacoes-env ~/aplicacoes-env
@@ -21,69 +21,69 @@ git config core.hooksPath .githooks
 make switch
 ```
 
-`make switch` detects the current system and runs `nix run home-manager -- switch --flake .#"$USER@$SYSTEM" --impure`. The `--impure` flag is required because `flake.nix` uses `builtins.getEnv "USER"` and `builtins.currentSystem` to auto-detect the current username and system architecture at evaluation time. This means the same flake works on both Linux (`x86_64-linux`) and macOS (`aarch64-darwin`, `x86_64-darwin`) without changes. On macOS, linux-only packages like `xclip` are excluded and systemd services are skipped.
+`make switch` detecta o sistema atual e executa `nix run home-manager -- switch --flake .#"$USER@$SYSTEM" --impure`. A flag `--impure` é necessária porque `flake.nix` usa `builtins.getEnv "USER"` e `builtins.currentSystem` para detectar automaticamente o nome de usuário e a arquitetura do sistema no momento da avaliação. Isso significa que o mesmo flake funciona tanto no Linux (`x86_64-linux`) quanto no macOS (`aarch64-darwin`, `x86_64-darwin`) sem alterações. No macOS, pacotes exclusivos do Linux como `xclip` são excluídos e serviços systemd são ignorados.
 
-## How it works
+## Como funciona
 
-`flake.nix` declares three sections:
+`flake.nix` declara três seções:
 
-**Inputs** fetch package definitions and modules from the internet. There are three package channels — `nixpkgs` (stable, nixos-25.05) for most packages, `nixpkgs-unstable` for packages not yet in stable, and `nixpkgs-latest` for bleeding edge (update independently with `nix flake update nixpkgs-latest`). Home Manager and agenix are also declared as inputs, both following the same nixpkgs to avoid duplicate evaluations.
+**Inputs** buscam definições de pacotes e módulos da internet. Existem três canais de pacotes — `nixpkgs` (estável, nixos-25.05) para a maioria dos pacotes, `nixpkgs-unstable` para pacotes ainda não disponíveis no estável, e `nixpkgs-latest` para versões mais recentes (atualize independentemente com `nix flake update nixpkgs-latest`). Home Manager e agenix também são declarados como inputs, ambos seguindo o mesmo nixpkgs para evitar avaliações duplicadas.
 
-**Outputs** define what this flake provides. The main output is a `homeConfigurations` entry that builds a standalone Home Manager configuration for the current user. It composes three module files: `home/core.nix` (username, home directory, state version), `home/pkgs.nix` (all installed packages), and `home/modules.nix` (imports everything from `home/modules/`). All modules receive shared variables (`pkgs`, `pkgsLatest`, `version`, `inputs`, `username`) via dependency injection through `specialArgs`.
+**Outputs** definem o que este flake fornece. A saída principal é uma entrada `homeConfigurations` que constrói uma configuração standalone do Home Manager para o usuário atual. Ela compõe três arquivos de módulo: `home/core.nix` (nome de usuário, diretório home, versão de estado), `home/pkgs.nix` (todos os pacotes instalados) e `home/modules.nix` (importa tudo de `home/modules/`). Todos os módulos recebem variáveis compartilhadas (`pkgs`, `pkgsLatest`, `version`, `inputs`, `username`) via injeção de dependência através de `specialArgs`.
 
-**homeManagerModules** expose individual pieces for consumption by personal dotfiles flakes — you can import packages only, modules only, secrets only, or the default (packages + modules).
+**homeManagerModules** expõem partes individuais para consumo por flakes pessoais de dotfiles — você pode importar apenas pacotes, apenas módulos, apenas secrets, ou o padrão (pacotes + módulos).
 
-## Modules
+## Módulos
 
-Modules live in `home/modules/`. Each one configures a specific tool or service using a copy-if-not-exists pattern via `home.activation` — files are deployed on first activation but never overwritten, so users can modify them locally after setup.
+Os módulos ficam em `home/modules/`. Cada um configura uma ferramenta ou serviço específico usando o padrão copiar-se-não-existe via `home.activation` — os arquivos são implantados na primeira ativação mas nunca sobrescritos, permitindo que os usuários os modifiquem localmente após a configuração.
 
-| Module | What it does |
-|--------|-------------|
-| `git.nix` | `.gitconfig` with delta pager, betha email, rebase on pull |
-| `ssh.nix` | `~/.ssh/config` for gitlab.services.betha.cloud and github.com |
-| `shell.nix` | `programs.bash` with history config, team aliases (eza, bat, k9s, EKS), PATH additions, `~/.bashrc.local` sourcing |
-| `npmrc.nix` | `.npmrc` with nexus registry, plus `inject-npm-auth` systemd service for token injection |
-| `agenix.nix` | Encrypted secrets decrypted at login via systemd user service |
+| Módulo | O que faz |
+|--------|-----------|
+| `git.nix` | `.gitconfig` com delta pager, email betha, rebase no pull |
+| `ssh.nix` | `~/.ssh/config` para gitlab.services.betha.cloud e github.com |
+| `shell.nix` | `programs.bash` com configuração de histórico, aliases do time (eza, bat, k9s, EKS), adições ao PATH, sourcing de `~/.bashrc.local` |
+| `npmrc.nix` | `.npmrc` com registry nexus, mais serviço systemd `inject-npm-auth` para injeção de token |
+| `agenix.nix` | Secrets criptografados descriptografados no login via serviço systemd do usuário |
 
-## Secrets Management
+## Gerenciamento de Secrets
 
-Encrypted secrets via [agenix](https://github.com/ryantm/agenix). The agenix Home Manager module runs a systemd user service at login (not during `home-manager switch`) that decrypts `.age` files to `$XDG_RUNTIME_DIR/agenix/`. The `inject-npm-auth` service runs after agenix to append `_authToken` to `.npmrc`.
+Secrets criptografados via [agenix](https://github.com/ryantm/agenix). O módulo Home Manager do agenix executa um serviço systemd de usuário no login (não durante `home-manager switch`) que descriptografa arquivos `.age` para `$XDG_RUNTIME_DIR/agenix/`. O serviço `inject-npm-auth` executa após o agenix para adicionar `_authToken` ao `.npmrc`.
 
-`secrets/secrets.nix` lists which public keys can decrypt each secret. To add a new secret: `agenix -e secrets/new-secret.age`.
+`secrets/secrets.nix` lista quais chaves públicas podem descriptografar cada secret. Para adicionar um novo secret: `agenix -e secrets/new-secret.age`.
 
-## Commands
+## Comandos
 
 ```bash
-make switch       # Apply config to current user
-make test         # Run all tests (eval + full deployment)
-make test-eval    # Quick: flake evaluation only
-make test-full    # Full: home-manager activation on Ubuntu 24.04
-make shell        # Interactive debug container
-make lint         # statix + deadnix + nixfmt check
-make fmt          # Format nix files
+make switch       # Aplicar configuração ao usuário atual
+make test         # Executar todos os testes (avaliação + deploy completo)
+make test-eval    # Rápido: apenas avaliação do flake
+make test-full    # Completo: ativação do home-manager no Ubuntu 24.04
+make shell        # Container interativo para debug
+make lint         # Verificação statix + deadnix + nixfmt
+make fmt          # Formatar arquivos nix
 ```
 
-## Consuming as Home Manager Module
+## Consumindo como Módulo Home Manager
 
-This flake exposes `homeManagerModules` for use in personal dotfiles:
+Este flake expõe `homeManagerModules` para uso em dotfiles pessoais:
 
 ```nix
-# In your flake.nix inputs:
+# Nos inputs do seu flake.nix:
 aplicacoes-env.url = "github:Castrozan/aplicacoes-env";
 
-# In your home-manager modules:
+# Nos seus módulos home-manager:
 imports = [ inputs.aplicacoes-env.homeManagerModules.default ];
 
-# Or import selectively:
+# Ou importe seletivamente:
 imports = [
-  inputs.aplicacoes-env.homeManagerModules.packages  # only packages
-  inputs.aplicacoes-env.homeManagerModules.modules    # only modules (git, ssh, shell, npmrc, agenix)
-  inputs.aplicacoes-env.homeManagerModules.secrets    # only agenix secrets config
+  inputs.aplicacoes-env.homeManagerModules.packages  # apenas pacotes
+  inputs.aplicacoes-env.homeManagerModules.modules    # apenas módulos (git, ssh, shell, npmrc, agenix)
+  inputs.aplicacoes-env.homeManagerModules.secrets    # apenas configuração de secrets agenix
 ];
 ```
 
-The consuming flake must provide `pkgs`, `pkgsLatest`, `version`, `inputs`, and `username` via `extraSpecialArgs`.
+O flake consumidor deve fornecer `pkgs`, `pkgsLatest`, `version`, `inputs` e `username` via `extraSpecialArgs`.
 
-## Pre-Push Checks
+## Verificações de Pre-Push
 
-Configured via `.githooks/pre-push.sh`. Skip with `SKIP_HOOKS=1 git push`.
+Configurado via `.githooks/pre-push.sh`. Pule com `SKIP_HOOKS=1 git push`.
