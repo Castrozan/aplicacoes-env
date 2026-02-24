@@ -27,7 +27,7 @@ make switch
 
 `flake.nix` declara três seções:
 
-**Inputs** buscam definições de pacotes e módulos da internet. Existem três canais de pacotes — `nixpkgs` (estável, nixos-25.05) para a maioria dos pacotes, `nixpkgs-unstable` para pacotes ainda não disponíveis no estável, e `nixpkgs-latest` para versões mais recentes (atualize independentemente com `nix flake update nixpkgs-latest`). Home Manager e agenix também são declarados como inputs, ambos seguindo o mesmo nixpkgs para evitar avaliações duplicadas.
+**Inputs** buscam definições de pacotes e módulos da internet. Existem três canais de pacotes — `nixpkgs` (estável, nixos-25.11) para a maioria dos pacotes, `nixpkgs-unstable` para pacotes ainda não disponíveis no estável, e `nixpkgs-latest` para versões mais recentes (atualize independentemente com `nix flake update nixpkgs-latest`). Home Manager e agenix também são declarados como inputs, ambos seguindo o mesmo nixpkgs para evitar avaliações duplicadas.
 
 **Outputs** definem o que este flake fornece. A saída principal é uma entrada `homeConfigurations` que constrói uma configuração standalone do Home Manager para o usuário atual. Ela compõe três arquivos de módulo: `home/core.nix` (nome de usuário, diretório home, versão de estado), `home/pkgs.nix` (todos os pacotes instalados) e `home/modules.nix` (importa tudo de `home/modules/`). Todos os módulos recebem variáveis compartilhadas (`pkgs`, `pkgsLatest`, `version`, `inputs`, `username`) via injeção de dependência através de `specialArgs`.
 
