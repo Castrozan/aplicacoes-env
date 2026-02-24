@@ -8,13 +8,13 @@
   # Inputs declare package definitions and modules to fetch from the internet
   inputs = {
     # For stable package definitions
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
     # For packages not yet in stable nixpkgs
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     # For latest bleeding edge packages - daily* updated with: $ nix flake update nixpkgs-latest
     nixpkgs-latest.url = "github:NixOS/nixpkgs/nixos-unstable";
     home-manager = {
-      url = "github:nix-community/home-manager/release-25.05";
+      url = "github:nix-community/home-manager/release-25.11";
       # follows = makes home-manager use the same nixpkgs as this flake
       inputs.nixpkgs.follows = "nixpkgs";
     };
@@ -40,7 +40,7 @@
       username = builtins.getEnv "USER"; # Detect current user (requires --impure flag)
       isLinux = builtins.match ".*-linux" system != null;
       isDarwin = builtins.match ".*-darwin" system != null;
-      version = "25.05";
+      version = "25.11";
       # Configure nixpkgs then attribute it to pkgs at the same time
       pkgs = import nixpkgs {
         inherit system;
