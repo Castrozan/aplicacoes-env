@@ -1,39 +1,34 @@
 {
   pkgs,
   pkgsLatest,
-  inputs,
-  isLinux,
   ...
 }:
 {
-  home.packages =
-    with pkgs;
-    [
-      bat
-      curl
-      eza
-      git
-      gnutar
-      unzip
-      zip
+  home.packages = with pkgs; [
+    # bat
+    # curl
+    # eza
+    # git
+    # gnutar
+    # unzip
+    # zip
+    # awscli2
+    # docker-compose
+    # k9s
+    # kubectl
+    # ripgrep-all
+    # uv
+    # code
+    # claude-code
+    # codex
+    # opencode
+    # gemini-cli
 
-      pkgsLatest.devenv
-      pkgsLatest.direnv
-
-      awscli2
-      docker-compose
-      k9s
-      kubectl
-      ripgrep-all
-      uv
-
-      alejandra
-      nixd
-      nixfmt-rfc-style
-
-      inputs.agenix.packages.${pkgs.system}.default
-    ]
-    ++ pkgs.lib.optionals isLinux [
-      xclip
-    ];
+    # Dev environments with nix https://devenv.sh/
+    pkgsLatest.devenv
+    # Nix formatting tools
+    alejandra
+    nixd
+    nixfmt-rfc-style
+  ];
 }

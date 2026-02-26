@@ -1,4 +1,10 @@
-{ username, isDarwin, ... }:
+{
+  pkgs,
+  inputs,
+  username,
+  isDarwin,
+  ...
+}:
 let
   secretsPath = ../../secrets;
   hasNpmToken = builtins.pathExists (secretsPath + "/npm-auth-token.age");
@@ -6,6 +12,10 @@ let
   hasAwsCredentials = builtins.pathExists (secretsPath + "/aws-credentials.age");
 in
 {
+  home.packages = [
+    inputs.agenix.packages.${pkgs.system}.default
+  ];
+
   age.identityPaths =
     let
       homePrefix = if isDarwin then "/Users" else "/home";
