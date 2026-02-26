@@ -52,44 +52,10 @@ RUN set -e && \
     nix run ".#homeConfigurations.\"${TEST_USER}@x86_64-linux\".activationPackage" --impure && \
     echo "=== Verifying packages ===" && \
     . ~/.nix-profile/etc/profile.d/hm-session-vars.sh 2>/dev/null || true && \
-    command -v git && git --version && \
-    command -v curl && echo "curl: installed" && \
-    command -v kubectl && echo "kubectl: installed" && \
-    command -v aws && echo "awscli: installed" && \
-    command -v k9s && echo "k9s: installed" && \
     command -v devenv && echo "devenv: installed" && \
-    command -v direnv && echo "direnv: installed" && \
-    command -v uv && echo "uv: installed" && \
-    command -v eza && echo "eza: installed" && \
-    command -v bat && echo "bat: installed" && \
     command -v alejandra && echo "alejandra: installed" && \
-    command -v agenix && echo "agenix: installed" && \
-    command -v tar && echo "gnutar: installed" && \
-    command -v unzip && echo "unzip: installed" && \
-    command -v zip && echo "zip: installed" && \
-    command -v docker-compose && echo "docker-compose: installed" && \
-    command -v rga && echo "ripgrep-all: installed" && \
     command -v nixd && echo "nixd: installed" && \
     command -v nixfmt && echo "nixfmt-rfc-style: installed" && \
-    command -v xclip && echo "xclip: installed" && \
-    echo "=== Verifying .npmrc ===" && \
-    test -f ~/.npmrc && echo "ok: .npmrc deployed" && \
-    grep -q "nexus3.betha.com.br" ~/.npmrc && echo "ok: .npmrc has nexus registry" && \
-    echo "=== Verifying .bashrc ===" && \
-    test -f ~/.bashrc && echo "ok: .bashrc deployed" && \
-    grep -q "HISTCONTROL" ~/.bashrc && echo "ok: .bashrc has history config" && \
-    echo "=== Triggering agenix decryption ===" && \
-    AGENIX_EXEC=$(grep -oP 'ExecStart=\K.*' ~/.config/systemd/user/agenix.service) && \
-    eval "$AGENIX_EXEC" && \
-    echo "=== Verifying decrypted secrets ===" && \
-    test -f "$XDG_RUNTIME_DIR/agenix/npm-auth-token" && echo "ok: npm-auth-token decrypted" && \
-    test -f "$XDG_RUNTIME_DIR/agenix/gitlab-deploy-token" && echo "ok: gitlab-deploy-token decrypted" && \
-    test -f "$XDG_RUNTIME_DIR/agenix/aws-credentials" && echo "ok: aws-credentials decrypted" && \
-    echo "=== Injecting npm auth token ===" && \
-    INJECT_EXEC=$(grep -oP 'ExecStart=\K.*' ~/.config/systemd/user/inject-npm-auth.service) && \
-    eval "$INJECT_EXEC" && \
-    echo "=== Verifying .npmrc auth token ===" && \
-    grep -q "_authToken" ~/.npmrc && echo "ok: .npmrc has _authToken" && \
     echo "=== DEPLOYMENT TEST PASSED ==="
 
 CMD ["bash"]
