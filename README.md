@@ -12,7 +12,14 @@ O ponto de entrada é `flake.nix`. Ele define inputs (de onde vêm os pacotes), 
 curl -L https://nixos.org/nix/install | sh -s -- --daemon
 ```
 
-### 2. Clonar e aplicar
+### 2. Habilitar flakes
+
+```bash
+mkdir -p ~/.config/nix
+echo "experimental-features = nix-command flakes" >> ~/.config/nix/nix.conf
+```
+
+### 3. Clonar e aplicar
 
 ```bash
 git clone https://github.com/Castrozan/aplicacoes-env ~/aplicacoes-env
